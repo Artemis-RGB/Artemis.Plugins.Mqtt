@@ -18,7 +18,12 @@ public class MqttServersDataModel : DataModel
             var id = server.ServerId.ToString();
             _servers.Add(
                 server.ServerId,
-                AddDynamicChild(id, new MqttServerDataModel(server.ServerId, new()))
+                AddDynamicChild(
+                    id, 
+                    new MqttServerDataModel(
+                        id,
+                        new()),
+                    server.DisplayName)
             );
         }
     }

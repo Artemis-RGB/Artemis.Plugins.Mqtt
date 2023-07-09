@@ -7,32 +7,37 @@ namespace Artemis.Plugins.Mqtt.DataModels;
 
 public class MqttServerDataModel : DataModel
 {
-    private readonly Guid _serverGuid;
+    private readonly string _path;
     private readonly ConcurrentDictionary<string, DynamicChild> _allDynamicChildren;
 
-    public MqttServerDataModel(Guid serverGuid, ConcurrentDictionary<string, DynamicChild> dict)
+    public MqttServerDataModel(string path, ConcurrentDictionary<string, DynamicChild> dict)
     {
-        _serverGuid = serverGuid;
+        _path = path;
         _allDynamicChildren = dict;
-    }
-
-    private static string GetNodeId(Guid serverGuid, string topic)
-    {
-        return $"{serverGuid}_{topic}";
     }
 
     public void PropagateValue(string topic, object data)
     {
-        var id = GetNodeId(_serverGuid, topic);
-        if (!_allDynamicChildren.TryGetValue(GetNodeId(default, topic), out var dynamicChild))
+        var parts = topic.Split('/');
+        if (parts.Length == 1)
         {
-            dynamicChild = AddDynamicChild(id, data.ToString());
-            _allDynamicChildren.TryAdd(id, dynamicChild);
-        }
+            var id = $"{_path}_{topic}";
+            if (!_allDynamicChildren.TryGetValue(id, out var dynamicChild))
+            {
+                dynamicChild = AddDynamicChild(id, data.ToString());
+                _allDynamicChildren.TryAdd(id, dynamicChild);
+            }
 
-        if (dynamicChild is DynamicChild<string> stringChild)
+            if (dynamicChild is DynamicChild<string> stringChild)
+            {
+                stringChild.Value = data.ToString();
+            }
+        }
+        else
         {
-            stringChild.Value = data.ToString();
+           var remainingTopic = string.Join('/', parts[1..]);
+           var childDataModel = AddDynamicChild(parts[1], new MqttServerDataModel(remainingTopic, _allDynamicChildren), parts[1]);
+           childDataModel.Value.PropagateValue(remainingTopic, data);
         }
     }
 }
