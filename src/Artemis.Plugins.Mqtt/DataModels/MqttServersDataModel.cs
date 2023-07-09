@@ -18,7 +18,7 @@ public class MqttServersDataModel : DataModel
             var id = server.ServerId.ToString();
             _servers.Add(
                 server.ServerId,
-                AddDynamicChild(id, new MqttNodeDataModel(id), server.DisplayName)
+                AddDynamicChild(id, new MqttNodeDataModel(""), server.DisplayName)
             );
         }
     }
@@ -27,7 +27,7 @@ public class MqttServersDataModel : DataModel
     {
         if (!_servers.TryGetValue(sourceServer, out var server))
             return;
-
-        server.Value.PropagateValue(topic, data);
+        var parts = topic.Split('/');
+        server.Value.PropagateValue(parts, data);
     }
 }
