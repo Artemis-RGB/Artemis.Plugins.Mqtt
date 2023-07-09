@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:local="clr-namespace:Artemis.Plugins.Mqtt.Screens"
+             xmlns:viewModels="clr-namespace:Artemis.Plugins.Mqtt.ViewModels"
              mc:Ignorable="d" Width="450"
-             x:Class="Artemis.Plugins.Mqtt.Screens.ServerConnectionDialogView"
-             x:DataType="local:ServerConnectionDialogViewModel">
+             x:Class="Artemis.Plugins.Mqtt.Views.ServerConnectionDialogView"
+             x:DataType="viewModels:ServerConnectionDialogViewModel">
 
     <StackPanel Margin="16">
         <TextBlock  Text="Edit Server Connection" />

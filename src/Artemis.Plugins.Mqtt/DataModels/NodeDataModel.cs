@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using Artemis.Core.Modules;
-using Artemis.Plugins.Mqtt.DataModels.Dynamic;
 
 namespace Artemis.Plugins.Mqtt.DataModels;
 

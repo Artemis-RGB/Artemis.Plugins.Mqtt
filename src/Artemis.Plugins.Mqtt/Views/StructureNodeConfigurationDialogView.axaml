@@ -4,9 +4,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:converters="clr-namespace:Artemis.UI.Shared.Converters;assembly=Artemis.UI.Shared"
-             xmlns:local="clr-namespace:Artemis.Plugins.Mqtt.Screens"
-             x:Class="Artemis.Plugins.Mqtt.Screens.StructureNodeConfigurationDialogView"
-             x:DataType="local:StructureNodeConfigurationDialogViewModel"
+             xmlns:viewModels="clr-namespace:Artemis.Plugins.Mqtt.ViewModels"
+             x:Class="Artemis.Plugins.Mqtt.Views.StructureNodeConfigurationDialogView"
+             x:DataType="viewModels:StructureNodeConfigurationDialogViewModel"
              mc:Ignorable="d" Width="450">
     <UserControl.Resources>
         <converters:TypeToStringConverter x:Key="TypeToStringConverter" />

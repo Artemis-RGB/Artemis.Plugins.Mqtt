@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using Artemis.Core;
-using Artemis.Plugins.Mqtt.DataModels.Dynamic;
+using Artemis.Plugins.Mqtt.DataModels;
 using Artemis.UI.Shared;
 using Artemis.UI.Shared.Services;
 using Artemis.UI.Shared.Services.Builders;
 using ReactiveUI;
 
-namespace Artemis.Plugins.Mqtt.Screens;
+namespace Artemis.Plugins.Mqtt.ViewModels;
 
 /// <summary>
 ///     ViewModel for the main MQTT plugin configuration view.

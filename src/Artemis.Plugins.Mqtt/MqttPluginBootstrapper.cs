@@ -1,5 +1,5 @@
 ﻿using Artemis.Core;
-using Artemis.Plugins.Mqtt.Screens;
+using Artemis.Plugins.Mqtt.ViewModels;
 using Artemis.UI.Shared;
 
 namespace Artemis.Plugins.Mqtt;

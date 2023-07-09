@@ -1,7 +1,7 @@
-﻿using Artemis.UI.Shared;
-using Avalonia.ReactiveUI;
+﻿using Artemis.Plugins.Mqtt.ViewModels;
+using Artemis.UI.Shared;
 
-namespace Artemis.Plugins.Mqtt.Screens;
+namespace Artemis.Plugins.Mqtt.Views;
 
 public partial class StructureNodeConfigurationDialogView : ReactiveAppWindow<StructureNodeConfigurationDialogViewModel>
 {

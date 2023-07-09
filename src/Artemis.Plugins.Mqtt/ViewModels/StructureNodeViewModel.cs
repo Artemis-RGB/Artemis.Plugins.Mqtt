@@ -3,96 +3,77 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Artemis.Plugins.Mqtt.DataModels.Dynamic;
+using Artemis.Plugins.Mqtt.DataModels;
 using Artemis.UI.Shared;
 using Artemis.UI.Shared.Services;
 
-namespace Artemis.Plugins.Mqtt.Screens;
+namespace Artemis.Plugins.Mqtt.ViewModels;
 
-/// <summary>
-///     ViewModel representing a <see cref="DynamicStructureNode" /> model.
-/// </summary>
 public class StructureNodeViewModel : ViewModelBase
 {
     private readonly IWindowService _windowService;
-    private readonly StructureNodeViewModel parent;
+    private readonly StructureNodeViewModel? _parent;
 
-    private string label;
-    private Guid? server;
-    private string topic;
-    private Type type;
-
-    /// <summary>
-    ///     Creates a new, blank ViewModel that represents a non-materialized <see cref="DynamicStructureNode" />.
-    /// </summary>
-    private StructureNodeViewModel(IWindowService windowService, StructureNodeViewModel parent)
+    private string _label;
+    private Guid? _server;
+    private string _topic;
+    private Type _type;
+    
+    public StructureNodeViewModel(IWindowService windowService, StructureNodeViewModel parent, StructureDefinitionNode model)
     {
-        this._windowService = windowService;
-        this.parent = parent;
+        _windowService = windowService;
+        _parent = parent;
+        
+        _label = model.Label;
+        _server = model.Server;
+        _topic = model.Topic;
+        _type = model.Type;
+
+        Children = model.IsGroup 
+            ? new ObservableCollection<StructureNodeViewModel>(model.Children!.Select(c => new StructureNodeViewModel(windowService, this, c))) 
+            : new ObservableCollection<StructureNodeViewModel>();
     }
 
-    /// <summary>
-    ///     Creates a new ViewModel that represents the given <see cref="DynamicStructureNode" />.
-    /// </summary>
-    public StructureNodeViewModel(IWindowService windowService, StructureNodeViewModel parent, StructureDefinitionNode model) : this(windowService,
-        parent)
-    {
-        label = model.Label;
-        server = model.Server;
-        topic = model.Topic;
-        type = model.Type;
-        if (model.Children != null)
-            Children = new ObservableCollection<StructureNodeViewModel>(
-                model.Children.Select(c => new StructureNodeViewModel(windowService, this, c))
-            );
-    }
-
-    /// <summary>
-    ///     Converts this ViewModel into a <see cref="DynamicStructureNode" /> model that can be saved, and used
-    ///     by the <see cref="DynamicClassBuilder" />.
-    /// </summary>
     public StructureDefinitionNode ViewModelToModel()
     {
-        return new StructureDefinitionNode()
-        {
-            Label = label,
-            Server = server,
-            Topic = topic,
-            Type = type,
-            Children = IsGroup ? new List<StructureDefinitionNode>(Children.Select(c => c.ViewModelToModel())) : null
-        };
+        var node = new StructureDefinitionNode(Label, Server, Topic, Type, IsGroup);
+
+        if (Children.Any())
+            node.Children.AddRange(Children.Select(c => c.ViewModelToModel()));
+
+        return node;
     }
 
     #region Properties
 
     public string Label
     {
-        get => label;
-        set => RaiseAndSetIfChanged(ref label, value);
+        get => _label;
+        set => RaiseAndSetIfChanged(ref _label, value);
     }
 
     public Guid? Server
     {
-        get => server;
-        set => RaiseAndSetIfChanged(ref server, value);
+        get => _server;
+        set => RaiseAndSetIfChanged(ref _server, value);
     }
 
     public string Topic
     {
-        get => topic;
-        set => RaiseAndSetIfChanged(ref topic, value);
+        get => _topic;
+        set => RaiseAndSetIfChanged(ref _topic, value);
     }
 
     public Type Type
     {
-        get => type;
-        set => RaiseAndSetIfChanged(ref type, value);
+        get => _type;
+        set => RaiseAndSetIfChanged(ref _type, value);
     }
 
     public ObservableCollection<StructureNodeViewModel> Children { get; init; }
 
-    public bool IsGroup => Children != null;
-    public bool IsValue => Children == null;
+    public bool IsGroup => Children.Any();
+    public bool IsValue => !IsGroup;
 
     #endregion
 
@@ -103,7 +84,10 @@ public class StructureNodeViewModel : ViewModelBase
     /// </summary>
     public async Task EditNode()
     {
-        var r = await _windowService.ShowDialogAsync<StructureNodeConfigurationDialogViewModel, StructureNodeConfigurationDialogResult>(this);
+        var r = await _windowService.ShowDialogAsync<StructureNodeConfigurationDialogViewModel, StructureDefinitionNode?>(this);
+        if (r == null)
+            return;
+
         Label = r.Label;
         Server = r.Server;
         Topic = r.Topic;
@@ -115,9 +99,14 @@ public class StructureNodeViewModel : ViewModelBase
     /// </summary>
     public async Task DeleteNode()
     {
-        // If Children is null or does not have this child, throw an error
-        if (parent.Children?.Contains(this) != true)
-            throw new InvalidOperationException("This node does not support child or child does not exist in this node.");
+        if(_parent == null)
+            throw new InvalidOperationException("Cannot delete root node.");
+        
+        if (!_parent.IsGroup)
+            throw new InvalidOperationException("Cannot delete child node from node that does not support children.");
+        
+        if (!_parent.Children.Contains(this))
+            throw new InvalidOperationException("Cannot delete node that is not a child of this node.");
 
         var result = await _windowService.ShowConfirmContentDialog(
             $"Delete {(IsGroup ? "Group" : "Value")}",
@@ -128,7 +117,7 @@ public class StructureNodeViewModel : ViewModelBase
             "Don't delete"
         );
         if (result)
-            parent.Children.Remove(this);
+            _parent.Children.Remove(this);
     }
 
     /// <summary>
@@ -138,18 +127,18 @@ public class StructureNodeViewModel : ViewModelBase
     /// <exception cref="InvalidOperationException">If this node is a value-type node that does not support children.</exception>
     public async Task AddChildNode(bool isGroup)
     {
-        if (IsValue)
+        if (!IsGroup)
             throw new InvalidOperationException("Cannot add a child item to an item that does not support children.");
 
-        var r = await _windowService.ShowDialogAsync<StructureNodeConfigurationDialogViewModel, StructureNodeConfigurationDialogResult>(isGroup);
-        Children.Add(new StructureNodeViewModel(_windowService, this)
-        {
-            Label = r.Label,
-            Server = isGroup ? null : r.Server,
-            Topic = isGroup ? null : r.Topic,
-            Type = isGroup ? null : r.Type,
-            Children = isGroup ? new ObservableCollection<StructureNodeViewModel>() : null
-        });
+        var child = new StructureDefinitionNode("", Guid.Empty, "", typeof(string), isGroup);
+        var childVm = new StructureNodeViewModel(_windowService, this, child);
+        
+        var dialogResult = await _windowService.ShowDialogAsync<StructureNodeConfigurationDialogViewModel, StructureDefinitionNode?>(childVm);
+        
+        if (dialogResult is null)
+            return;
+
+        Children.Add(childVm);
     }
 
     #endregion

@@ -1,6 +1,7 @@
-﻿using Avalonia.ReactiveUI;
+﻿using Artemis.Plugins.Mqtt.ViewModels;
+using Avalonia.ReactiveUI;
 
-namespace Artemis.Plugins.Mqtt.Screens;
+namespace Artemis.Plugins.Mqtt.Views;
 
 public partial class MqttPluginConfigurationView : ReactiveUserControl<MqttPluginConfigurationViewModel>
 {

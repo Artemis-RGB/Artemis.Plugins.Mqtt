@@ -1,13 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Artemis.Plugins.Mqtt.DataModels.Dynamic;
+namespace Artemis.Plugins.Mqtt.DataModels;
 
 /// <summary>
 ///     Class that defines a single node of the DataModel structure.
 /// </summary>
 public class StructureDefinitionNode
 {
+    public StructureDefinitionNode(string label, Guid? server, string topic, Type type, bool isGroup)
+    {
+        Label = label;
+        Server = server;
+        Topic = topic;
+        Type = type;
+        Children = isGroup ? new List<StructureDefinitionNode>() : null;
+    }
+
     /// <summary>
     ///     The display name this node will appear as in the Artemis Data Model.
     /// </summary>
@@ -27,18 +36,19 @@ public class StructureDefinitionNode
     ///     The type of value stored in this node.
     /// </summary>
     public Type Type { get; set; }
+    
+    /// <summary>
+    ///     Whether this node is a group or not.
+    /// </summary>
+    public bool IsGroup => Children != null;
 
     /// <summary>
     ///     Any children this node has.
     /// </summary>
-    public List<StructureDefinitionNode> Children { get; set; }
+    public List<StructureDefinitionNode>? Children { get; set; }
 
     /// <summary>
     ///     Returns a default root <see cref="StructureDefinitionNode" />.
     /// </summary>
-    public static StructureDefinitionNode RootDefault => new()
-    {
-        Label = "Root",
-        Children = new List<StructureDefinitionNode>()
-    };
+    public static StructureDefinitionNode RootDefault => new("Root", null, "", typeof(object), true);
 }

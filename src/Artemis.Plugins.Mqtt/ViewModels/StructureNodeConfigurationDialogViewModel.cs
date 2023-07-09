@@ -1,53 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reactive;
-using System.Threading.Tasks;
 using Artemis.Core;
+using Artemis.Plugins.Mqtt.DataModels;
 using Artemis.UI.Shared;
 using ReactiveUI;
 using ReactiveUI.Validation.Extensions;
 
-namespace Artemis.Plugins.Mqtt.Screens;
+namespace Artemis.Plugins.Mqtt.ViewModels;
 
 /// <summary>
 ///     ViewModel for single node edit dialog.
 /// </summary>
-public class StructureNodeConfigurationDialogViewModel : DialogViewModelBase<StructureNodeConfigurationDialogResult>
+public class StructureNodeConfigurationDialogViewModel : DialogViewModelBase<StructureDefinitionNode?>
 {
-    private static readonly Type[] supportedTypes = { typeof(string), typeof(bool), typeof(int), typeof(double) };
+    private string _label;
+    private Guid? _server;
+    private string _topic;
+    private Type _type;
 
-    private string label;
-    private Guid? server;
-    private string topic;
-    private Type type;
-
-    public StructureNodeConfigurationDialogViewModel(PluginSettings settingsService, bool isGroup): this()
+    public StructureNodeConfigurationDialogViewModel(PluginSettings pluginSettings, StructureNodeViewModel poco)
     {
-        label = "";
-        server = Guid.Empty;
-        topic = isGroup ? null : "";
-        type = isGroup ? null : supportedTypes[0];
-        IsGroup = isGroup;
-        ServerConnectionsSetting = settingsService.GetSetting<List<MqttConnectionSettings>>("ServerConnections");
-    }
+        _label = poco.Label;
+        _server = poco.Server;
+        _topic = poco.Topic;
+        _type = poco.Type;
+        IsGroup = poco.IsGroup;
+        ServerConnectionsSetting = pluginSettings.GetSetting<List<MqttConnectionSettings>>("ServerConnections");
 
-    public StructureNodeConfigurationDialogViewModel(PluginSettings settingsService, StructureNodeViewModel target) : this()
-    {
-        label = target.Label;
-        server = target.Server;
-        topic = target.Topic;
-        type = target.Type;
-        IsGroup = target.IsGroup;
-        ServerConnectionsSetting = settingsService.GetSetting<List<MqttConnectionSettings>>("ServerConnections");
-    }
-
-    private StructureNodeConfigurationDialogViewModel()
-    {
         Save = ReactiveCommand.Create(ExecuteSave);
+        Cancel = ReactiveCommand.Create(ExecuteCancel);
         this.ValidationRule(vm => vm.Label, label => !string.IsNullOrWhiteSpace(label), "Label cannot be empty");
         this.ValidationRule(vm => vm.Server, server => server != null && server != Guid.Empty, "Server cannot be empty");
         this.ValidationRule(vm => vm.Topic, topic => !string.IsNullOrWhiteSpace(topic), "Topic cannot be empty");
-        
+
         if (!IsGroup)
         {
             this.ValidationRule(vm => vm.Type, type => type != null, "Type cannot be empty");
@@ -55,47 +41,48 @@ public class StructureNodeConfigurationDialogViewModel : DialogViewModelBase<Str
     }
 
     public ReactiveCommand<Unit, Unit> Save { get; }
-    
+
     public ReactiveCommand<Unit, Unit> Cancel { get; }
 
     public string Label
     {
-        get => label;
-        set => RaiseAndSetIfChanged(ref label, value);
+        get => _label;
+        set => RaiseAndSetIfChanged(ref _label, value);
     }
 
     public Guid? Server
     {
-        get => server;
-        set => RaiseAndSetIfChanged(ref server, value);
+        get => _server;
+        set => RaiseAndSetIfChanged(ref _server, value);
     }
 
     public string Topic
     {
-        get => topic;
-        set => RaiseAndSetIfChanged(ref topic, value);
+        get => _topic;
+        set => RaiseAndSetIfChanged(ref _topic, value);
     }
 
     public Type Type
     {
-        get => type;
-        set => RaiseAndSetIfChanged(ref type, value);
+        get => _type;
+        set => RaiseAndSetIfChanged(ref _type, value);
     }
-    
+
     public bool IsGroup { get; }
     public bool IsValue => !IsGroup;
 
-    public IEnumerable<Type> SupportedValueTypes => supportedTypes;
+    public IEnumerable<Type> SupportedValueTypes { get; } = new[] { typeof(string), typeof(bool), typeof(int), typeof(double) };
+
     public PluginSetting<List<MqttConnectionSettings>> ServerConnectionsSetting { get; }
 
     public void ExecuteSave()
     {
         if (!HasErrors)
-            Close(new StructureNodeConfigurationDialogResult(Label, Server, Topic, Type));
+            Close(new(Label, Server, Topic, Type, IsGroup));
+    }
+
+    public void ExecuteCancel()
+    {
+        Close(null);
     }
 }
-
-/// <summary>
-///     POCO that contains the result of a successful MqttNodeConfiguration dialog.
-/// </summary>
-public record StructureNodeConfigurationDialogResult(string Label, Guid? Server, string Topic, Type Type);

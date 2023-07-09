@@ -3,7 +3,7 @@ using Artemis.UI.Shared;
 using ReactiveUI;
 using ReactiveUI.Validation.Extensions;
 
-namespace Artemis.Plugins.Mqtt.Screens;
+namespace Artemis.Plugins.Mqtt.ViewModels;
 
 public class ServerConnectionDialogViewModel : DialogViewModelBase<DialogResult>
 {
