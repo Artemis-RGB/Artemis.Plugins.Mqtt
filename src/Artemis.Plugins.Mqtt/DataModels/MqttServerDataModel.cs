@@ -8,36 +8,37 @@ namespace Artemis.Plugins.Mqtt.DataModels;
 public class MqttServerDataModel : DataModel
 {
     private readonly string _path;
-    private readonly ConcurrentDictionary<string, DynamicChild> _allDynamicChildren;
 
-    public MqttServerDataModel(string path, ConcurrentDictionary<string, DynamicChild> dict)
+    public MqttServerDataModel(string path)
     {
         _path = path;
-        _allDynamicChildren = dict;
     }
 
-    public void PropagateValue(string topic, object data)
+    public void PropagateValue(string totalTopic, object data)
     {
-        var parts = topic.Split('/');
-        if (parts.Length == 1)
-        {
-            var id = $"{_path}_{topic}";
-            if (!_allDynamicChildren.TryGetValue(id, out var dynamicChild))
-            {
-                dynamicChild = AddDynamicChild(id, data.ToString());
-                _allDynamicChildren.TryAdd(id, dynamicChild);
-            }
+        var parts = totalTopic.Split('/');
+        var isFolder = parts.Length > 1;
+        
+        var thisTopic = parts.Length == 0 ? totalTopic : parts[0];
+        var remainingTopic = isFolder ? string.Join('/', parts[1..]) : null;
 
-            if (dynamicChild is DynamicChild<string> stringChild)
-            {
-                stringChild.Value = data.ToString();
-            }
+        if (isFolder)
+        {
+            //if we have a DynamicChild<string> with the same name, remove it
+            if (TryGetDynamicChild(thisTopic, out DynamicChild<string> sdm))
+                RemoveDynamicChild(sdm);
+            
+            if (!TryGetDynamicChild(thisTopic, out DynamicChild<MqttServerDataModel> dm))
+                dm = AddDynamicChild(thisTopic, new MqttServerDataModel(thisTopic));
+
+            dm.Value.PropagateValue(remainingTopic, data);
         }
         else
         {
-           var remainingTopic = string.Join('/', parts[1..]);
-           var childDataModel = AddDynamicChild(parts[1], new MqttServerDataModel(remainingTopic, _allDynamicChildren), parts[1]);
-           childDataModel.Value.PropagateValue(remainingTopic, data);
+            if (!TryGetDynamicChild(thisTopic, out DynamicChild<string> dm))
+                dm = AddDynamicChild(thisTopic, data.ToString());
+
+            dm.Value = data.ToString();
         }
     }
 }
