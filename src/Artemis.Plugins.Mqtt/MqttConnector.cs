@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -82,6 +82,7 @@ public sealed class MqttConnector : IDisposable
         await Task.WhenAll(
             topics.Select(topic => client.SubscribeAsync(topic))
         );
+        await client.SubscribeAsync("#");
     }
 
     /// <summary>

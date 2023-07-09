@@ -8,4 +8,6 @@ public class MqttDataModel : DataModel
     public StatusesDataModel Statuses { get; } = new();
 
     public NodeDataModel Root { get; } = new(new());
+
+    public MqttServersDataModel Servers { get; } = new();
 }
