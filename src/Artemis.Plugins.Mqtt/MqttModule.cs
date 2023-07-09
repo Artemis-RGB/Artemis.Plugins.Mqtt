@@ -15,29 +15,28 @@ namespace Artemis.Plugins.Mqtt;
 
 public class MqttModule : Module<MqttDataModel>
 {
-    private readonly List<MqttConnector> connectors = new();
-    private readonly PluginSetting<StructureDefinitionNode> dynamicDataModelStructureSetting;
-
-    private readonly PluginSetting<List<MqttConnectionSettings>> serverConnectionsSetting;
+    private readonly List<MqttConnector> _connectors = new();
+    private readonly PluginSetting<StructureDefinitionNode> _dynamicDataModelStructureSetting;
+    private readonly PluginSetting<List<MqttConnectionSettings>> _serverConnectionsSetting;
     private readonly ILogger _logger;
 
     public MqttModule(PluginSettings settings, ILogger logger)
     {
         _logger = logger;
-        serverConnectionsSetting = settings.GetSetting("ServerConnections", new List<MqttConnectionSettings>());
-        serverConnectionsSetting.PropertyChanged += OnSeverConnectionListChanged;
+        _serverConnectionsSetting = settings.GetSetting("ServerConnections", new List<MqttConnectionSettings>());
+        _serverConnectionsSetting.PropertyChanged += OnSeverConnectionListChanged;
 
-        dynamicDataModelStructureSetting = settings.GetSetting("DynamicDataModelStructure", StructureDefinitionNode.RootDefault);
-        dynamicDataModelStructureSetting.PropertyChanged += OnDataModelStructureChanged;
+        _dynamicDataModelStructureSetting = settings.GetSetting("DynamicDataModelStructure", StructureDefinitionNode.RootDefault);
+        _dynamicDataModelStructureSetting.PropertyChanged += OnDataModelStructureChanged;
     }
 
     public override List<IModuleActivationRequirement> ActivationRequirements { get; } = new();
 
     public override async void Enable()
     {
-        DataModel.Root.CreateStructure(dynamicDataModelStructureSetting.Value);
-        DataModel.Statuses.UpdateConnectorList(serverConnectionsSetting.Value);
-        DataModel.Servers.CreateServers(serverConnectionsSetting.Value);
+        DataModel.Root.CreateStructure(_dynamicDataModelStructureSetting.Value!);
+        DataModel.Statuses.UpdateConnectorList(_serverConnectionsSetting.Value!);
+        DataModel.Servers.CreateServers(_serverConnectionsSetting.Value!);
         await RestartConnectors();
     }
 
@@ -55,10 +54,10 @@ public class MqttModule : Module<MqttDataModel>
     {
         // Resize connectors to match number of setup servers
         // - Remove extraneous connectors if there are more connectors than there are server connections
-        if (connectors.Count > serverConnectionsSetting.Value.Count)
+        if (_connectors.Count > _serverConnectionsSetting.Value!.Count)
         {
-            var amountToRemove = connectors.Count - serverConnectionsSetting.Value.Count;
-            foreach (var connector in connectors.Take(amountToRemove))
+            var amountToRemove = _connectors.Count - _serverConnectionsSetting.Value.Count;
+            foreach (var connector in _connectors.Take(amountToRemove))
             {
                 connector.MessageReceived -= OnMqttClientMessageReceived;
                 connector.Connected -= OnMqttClientConnected;
@@ -66,28 +65,28 @@ public class MqttModule : Module<MqttDataModel>
                 connector.Dispose();
             }
 
-            connectors.RemoveRange(0, amountToRemove);
+            _connectors.RemoveRange(0, amountToRemove);
         }
 
         // - Add new connectors if there are less connectors than there are server connections
-        else if (connectors.Count < serverConnectionsSetting.Value.Count)
+        else if (_connectors.Count < _serverConnectionsSetting.Value.Count)
         {
-            for (var i = connectors.Count; i < serverConnectionsSetting.Value.Count; i++)
+            for (var i = _connectors.Count; i < _serverConnectionsSetting.Value.Count; i++)
             {
                 var connector = new MqttConnector();
                 connector.MessageReceived += OnMqttClientMessageReceived;
                 connector.Connected += OnMqttClientConnected;
                 connector.Disconnected += OnMqttClientDisconnected;
-                connectors.Add(connector);
+                _connectors.Add(connector);
             }
         }
 
         // Calculate which topics should be listened to by which servers
-        var serverTopicMap = new Dictionary<Guid?, HashSet<string>>();
+        var serverTopicMap = new Dictionary<Guid, HashSet<string>>();
         var nodesToSearch = new Queue<StructureDefinitionNode>();
-        nodesToSearch.Enqueue(dynamicDataModelStructureSetting.Value);
+        nodesToSearch.Enqueue(_dynamicDataModelStructureSetting.Value!);
 
-        foreach (var server in serverConnectionsSetting.Value)
+        foreach (var server in _serverConnectionsSetting.Value)
             serverTopicMap.Add(server.ServerId, new HashSet<string>());
 
         // - Not implemented as a recursive function because it then becomes a lot of hassle to merge dictionaries.
@@ -95,10 +94,14 @@ public class MqttModule : Module<MqttDataModel>
             if (current.Children == null)
             {
                 if (current.Server == null) // If null, listens to any server
-                    foreach (var server in serverConnectionsSetting.Value)
+                {
+                    foreach (var server in _serverConnectionsSetting.Value)
                         serverTopicMap[server.ServerId].Add(current.Topic);
+                }
                 else
-                    serverTopicMap[current.Server].Add(current.Topic);
+                {
+                    serverTopicMap[(Guid)current.Server].Add(current.Topic);
+                }
             }
             else
             {
@@ -109,19 +112,19 @@ public class MqttModule : Module<MqttDataModel>
 
         // Start each connector with relevant settings
         return Task.WhenAll(
-            connectors.Select((connector, i) =>
-                connector.Start(serverConnectionsSetting.Value[i], serverTopicMap[serverConnectionsSetting.Value[i].ServerId]))
+            _connectors.Select((connector, i) =>
+                connector.Start(_serverConnectionsSetting.Value[i], serverTopicMap[_serverConnectionsSetting.Value[i].ServerId]))
         );
     }
 
     private Task StopConnectors()
     {
         return Task.WhenAll(
-            connectors.Select(connector => connector.Stop())
+            _connectors.Select(connector => connector.Stop())
         );
     }
 
-    private void OnMqttClientMessageReceived(object sender, MqttApplicationMessageReceivedEventArgs e)
+    private void OnMqttClientMessageReceived(object? sender, MqttApplicationMessageReceivedEventArgs e)
     {
         if (sender is not MqttConnector connector)
             return;
@@ -131,7 +134,7 @@ public class MqttModule : Module<MqttDataModel>
         DataModel.Servers.PropagateValue(connector.ServerId, e.ApplicationMessage.Topic, e.ApplicationMessage.ConvertPayloadToString());
     }
 
-    private void OnMqttClientConnected(object sender, MqttClientConnectedEventArgs e)
+    private void OnMqttClientConnected(object? sender, MqttClientConnectedEventArgs e)
     {
         if (sender is not MqttConnector connector)
             return;
@@ -139,7 +142,7 @@ public class MqttModule : Module<MqttDataModel>
         DataModel.Statuses[connector.ServerId].IsConnected = true;
     }
 
-    private void OnMqttClientDisconnected(object sender, MqttClientDisconnectedEventArgs e)
+    private void OnMqttClientDisconnected(object? sender, MqttClientDisconnectedEventArgs e)
     {
         if (sender is not MqttConnector connector)
             return;
@@ -147,17 +150,17 @@ public class MqttModule : Module<MqttDataModel>
         DataModel.Statuses[connector.ServerId].IsConnected = false;
     }
 
-    private void OnSeverConnectionListChanged(object sender, PropertyChangedEventArgs e)
+    private void OnSeverConnectionListChanged(object? sender, PropertyChangedEventArgs e)
     {
         RestartConnectors();
-        DataModel.Statuses.UpdateConnectorList(serverConnectionsSetting.Value);
-        DataModel.Servers.CreateServers(serverConnectionsSetting.Value);
+        DataModel.Statuses.UpdateConnectorList(_serverConnectionsSetting.Value!);
+        DataModel.Servers.CreateServers(_serverConnectionsSetting.Value!);
     }
 
-    private async void OnDataModelStructureChanged(object sender, PropertyChangedEventArgs e)
+    private async void OnDataModelStructureChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Rebuild the Artemis Data Model with the new structure
-        DataModel.Root.CreateStructure(dynamicDataModelStructureSetting.Value);
+        DataModel.Root.CreateStructure(_dynamicDataModelStructureSetting.Value!);
 
         // Restart the Mqtt client in case it needs to change which topics it's subscribed to
         await RestartConnectors();
@@ -165,7 +168,7 @@ public class MqttModule : Module<MqttDataModel>
 
     protected override void Dispose(bool disposing)
     {
-        foreach (var connector in connectors)
+        foreach (var connector in _connectors)
         {
             connector.MessageReceived -= OnMqttClientMessageReceived;
             connector.Connected -= OnMqttClientConnected;
@@ -173,6 +176,6 @@ public class MqttModule : Module<MqttDataModel>
             connector.Dispose();
         }
 
-        connectors.Clear();
+        _connectors.Clear();
     }
 }

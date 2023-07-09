@@ -15,41 +15,42 @@ namespace Artemis.Plugins.Mqtt;
 /// </summary>
 public sealed class MqttConnector : IDisposable
 {
-    private static readonly MqttFactory clientFactory = new();
-    private readonly IManagedMqttClient client;
+    private static readonly MqttFactory ClientFactory = new();
+    private readonly IManagedMqttClient _client;
 
     public MqttConnector()
     {
-        client = clientFactory.CreateManagedMqttClient();
-        client.UseApplicationMessageReceivedHandler(OnClientMessageReceived);
-        client.UseConnectedHandler(OnClientConnected);
-        client.UseDisconnectedHandler(OnClientDisconnected);
+        _client = ClientFactory.CreateManagedMqttClient();
+        _client.UseApplicationMessageReceivedHandler(OnClientMessageReceived);
+        _client.UseConnectedHandler(OnClientConnected);
+        _client.UseDisconnectedHandler(OnClientDisconnected);
     }
 
     /// <summary>
     ///     The ID of the server this connector is connected to.
     ///     <para />
-    ///     Based on the 'ServerId' property from the settings object passed to <see cref="Start(MqttConnectionSettings)" />.
+    ///     Based on the 'ServerId' property from the settings object passed to <see cref="Start(MqttConnectionSettings,IEnumerable{string})" />.
     /// </summary>
     public Guid ServerId { get; private set; }
 
     /// <summary>
     ///     Whether or not this connector is currently connected to a server.
     /// </summary>
+    // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public bool IsConnected { get; private set; }
 
     public void Dispose()
     {
-        client.Dispose();
+        _client.Dispose();
     }
 
     /// <summary>
     ///     Event that fires when this connector receives a message from the server it is connected to.
     /// </summary>
-    public event EventHandler<MqttApplicationMessageReceivedEventArgs> MessageReceived;
+    public event EventHandler<MqttApplicationMessageReceivedEventArgs>? MessageReceived;
 
-    public event EventHandler<MqttClientConnectedEventArgs> Connected;
-    public event EventHandler<MqttClientDisconnectedEventArgs> Disconnected;
+    public event EventHandler<MqttClientConnectedEventArgs>? Connected;
+    public event EventHandler<MqttClientDisconnectedEventArgs>? Disconnected;
 
     /// <summary>
     ///     Sets up and starts listening with the MQTT client behind this connector.
@@ -77,12 +78,12 @@ public sealed class MqttConnector : IDisposable
             .WithClientOptions(clientOptions.Build())
             .Build();
 
-        await client.StopAsync();
-        await client.StartAsync(managedClientOptions);
+        await _client.StopAsync();
+        await _client.StartAsync(managedClientOptions);
         await Task.WhenAll(
-            topics.Select(topic => client.SubscribeAsync(topic))
+            topics.Select(topic => _client.SubscribeAsync(topic))
         );
-        await client.SubscribeAsync("#");
+        await _client.SubscribeAsync("#");
     }
 
     /// <summary>
@@ -90,7 +91,7 @@ public sealed class MqttConnector : IDisposable
     /// </summary>
     public Task Stop()
     {
-        return client.StopAsync();
+        return _client.StopAsync();
     }
 
     private void OnClientMessageReceived(MqttApplicationMessageReceivedEventArgs e)

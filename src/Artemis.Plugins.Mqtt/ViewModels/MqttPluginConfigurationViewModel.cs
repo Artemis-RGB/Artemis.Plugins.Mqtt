@@ -26,10 +26,10 @@ public class MqttPluginConfigurationViewModel : PluginConfigurationViewModel
         _windowService = windowService;
 
         _serverConnectionsSetting = settings.GetSetting("ServerConnections", new List<MqttConnectionSettings>());
-        ServerConnections = new ObservableCollection<MqttConnectionSettings>(_serverConnectionsSetting.Value);
+        ServerConnections = new ObservableCollection<MqttConnectionSettings>(_serverConnectionsSetting.Value!);
 
         _dynamicDataModelStructureSetting = settings.GetSetting("DynamicDataModelStructure", StructureDefinitionNode.RootDefault);
-        DynamicDataModelStructureRoot = new StructureNodeViewModel(windowService, null, _dynamicDataModelStructureSetting.Value);
+        DynamicDataModelStructureRoot = new StructureNodeViewModel(windowService, null, _dynamicDataModelStructureSetting.Value!);
         
         AddServerConnection = ReactiveCommand.Create(ExecuteAddServerConnection);
         EditServerConnection = ReactiveCommand.Create<MqttConnectionSettings>(ExecuteEditServerConnection);

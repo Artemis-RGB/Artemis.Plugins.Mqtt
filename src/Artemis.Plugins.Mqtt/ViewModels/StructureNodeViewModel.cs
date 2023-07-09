@@ -19,7 +19,7 @@ public class StructureNodeViewModel : ViewModelBase
     private string _topic;
     private Type _type;
     
-    public StructureNodeViewModel(IWindowService windowService, StructureNodeViewModel parent, StructureDefinitionNode model)
+    public StructureNodeViewModel(IWindowService windowService, StructureNodeViewModel? parent, StructureDefinitionNode model)
     {
         _windowService = windowService;
         _parent = parent;
@@ -39,7 +39,7 @@ public class StructureNodeViewModel : ViewModelBase
         var node = new StructureDefinitionNode(Label, Server, Topic, Type, IsGroup);
 
         if (Children.Any())
-            node.Children.AddRange(Children.Select(c => c.ViewModelToModel()));
+            node.Children!.AddRange(Children.Select(c => c.ViewModelToModel()));
 
         return node;
     }
