@@ -4,11 +4,11 @@ using Artemis.Core.Modules;
 
 namespace Artemis.Plugins.Mqtt.DataModels;
 
-public class MqttServerDataModel : DataModel
+public class MqttNodeDataModel : DataModel
 {
     private readonly string _path;
 
-    public MqttServerDataModel(string path)
+    public MqttNodeDataModel(string path)
     {
         _path = path;
     }
@@ -27,8 +27,8 @@ public class MqttServerDataModel : DataModel
             if (TryGetDynamicChild(thisTopic, out DynamicChild<string>? sdm))
                 RemoveDynamicChild(sdm);
             
-            if (!TryGetDynamicChild(thisTopic, out DynamicChild<MqttServerDataModel>? dm))
-                dm = AddDynamicChild(thisTopic, new MqttServerDataModel(thisTopic));
+            if (!TryGetDynamicChild(thisTopic, out DynamicChild<MqttNodeDataModel>? dm))
+                dm = AddDynamicChild(thisTopic, new MqttNodeDataModel(thisTopic));
 
             dm.Value.PropagateValue(remainingTopic!, data);
         }

@@ -6,7 +6,7 @@ namespace Artemis.Plugins.Mqtt.DataModels;
 
 public class MqttServersDataModel : DataModel
 {
-    private readonly Dictionary<Guid, DynamicChild<MqttServerDataModel>> _servers = new();
+    private readonly Dictionary<Guid, DynamicChild<MqttNodeDataModel>> _servers = new();
 
     internal void CreateServers(IEnumerable<MqttConnectionSettings> servers)
     {
@@ -18,7 +18,7 @@ public class MqttServersDataModel : DataModel
             var id = server.ServerId.ToString();
             _servers.Add(
                 server.ServerId,
-                AddDynamicChild(id, new MqttServerDataModel(id), server.DisplayName)
+                AddDynamicChild(id, new MqttNodeDataModel(id), server.DisplayName)
             );
         }
     }
