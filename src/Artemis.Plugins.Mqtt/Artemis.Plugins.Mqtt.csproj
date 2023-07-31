@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ArtemisRGB.UI.Shared" IncludeAssets="compile;build;buildTransitive" Version="1.2023.622.7" />
+        <PackageReference Include="ArtemisRGB.UI.Shared" IncludeAssets="compile;build;buildTransitive" Version="1.2023.727.9" />
         <PackageReference Include="MQTTnet" Version="3.0.14-rc5" />
         <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="3.0.14-rc5" />
     </ItemGroup>
