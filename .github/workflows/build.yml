@@ -7,19 +7,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '8.0.x'
-          
       - name: Clone Plugins
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Build Plugin
         run: dotnet publish -c Release src
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Artemis.Plugins.Mqtt
-          path: src/Artemis.Plugins.Mqtt/bin/x64/Release/net8.0/publish
+          path: src/Artemis.Plugins.Mqtt/bin/x64/Release/net10.0/publish
