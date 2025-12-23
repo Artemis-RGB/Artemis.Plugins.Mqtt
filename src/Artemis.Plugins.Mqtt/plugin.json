@@ -1,6 +1,6 @@
 {
   "Guid": "26869065-4728-469e-b7d5-38e90d6dca40",
-  "MinimumVersion": "1.2025.1222.3"
+  "MinimumVersion": "1.2025.1222.3",
   "Name": "MQTT data model expansion",
   "Author": "Wibble199 & diogotr7",
   "Icon": "AccessPoint",
