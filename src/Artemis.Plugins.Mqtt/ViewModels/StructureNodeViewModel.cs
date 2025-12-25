@@ -27,7 +27,7 @@ public class StructureNodeViewModel : ViewModelBase
         _label = model.Label;
         _server = model.Server;
         _topic = model.Topic;
-        _type = model.Type;
+        _type = model.Type ?? throw new InvalidOperationException("Type cannot be null in model.");
 
         Children = model.IsGroup 
             ? new ObservableCollection<StructureNodeViewModel>(model.Children!.Select(c => new StructureNodeViewModel(windowService, this, c))) 
@@ -91,7 +91,7 @@ public class StructureNodeViewModel : ViewModelBase
         Label = r.Label;
         Server = r.Server;
         Topic = r.Topic;
-        Type = r.Type;
+        Type = r.Type ?? throw new InvalidOperationException();
     }
 
     /// <summary>

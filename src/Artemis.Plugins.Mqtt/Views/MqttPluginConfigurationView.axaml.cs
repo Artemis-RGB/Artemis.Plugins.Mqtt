@@ -1,5 +1,5 @@
 ﻿using Artemis.Plugins.Mqtt.ViewModels;
-using Avalonia.ReactiveUI;
+using ReactiveUI.Avalonia;
 
 namespace Artemis.Plugins.Mqtt.Views;
 

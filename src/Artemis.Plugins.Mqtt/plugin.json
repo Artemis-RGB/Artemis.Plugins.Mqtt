@@ -1,10 +1,10 @@
 {
   "Guid": "26869065-4728-469e-b7d5-38e90d6dca40",
-  "Api": "1.0",
   "Name": "MQTT data model expansion",
   "Author": "Wibble199 & diogotr7",
   "Icon": "AccessPoint",
   "Description": "Provides a customisable data model based on data received by subscribing to an MQTT broker.",
-  "Version": "1.1.0.0",
-  "Main": "Artemis.Plugins.Mqtt.dll"
+  "Version": "2.0.0.0",
+  "Main": "Artemis.Plugins.Mqtt.dll",
+  "MinimumVersion": "1.2025.1223.3"
 }
